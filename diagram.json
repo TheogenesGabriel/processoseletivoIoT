@@ -2,6 +2,26 @@
   "version": 1,
   "author": "Uri Shaked",
   "editor": "wokwi",
-  "parts": [ { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} } ],
-  "connections": [ [ "esp:TX", "$serialMonitor:RX", "", [] ], [ "esp:RX", "$serialMonitor:TX", "", [] ] ]
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -67.2, "left": -273.56, "attrs": {} },
+    { "type": "wokwi-mpu6050", "id": "imu1", "top": -15.38, "left": -55.28, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 73.4,
+      "left": -96,
+      "attrs": { "color": "green", "xray": "1" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "imu1:VCC", "esp:3V3", "red", [ "v-86.4", "h-307.12", "v57.6" ] ],
+    [ "imu1:GND", "esp:GND.2", "black", [ "v-67.2", "h-182.32" ] ],
+    [ "imu1:SCL", "esp:22", "orange", [ "v-48", "h-143.92", "v38.4" ] ],
+    [ "imu1:SDA", "esp:21", "gold", [ "v-38.4", "h-124.72", "v48" ] ],
+    [ "btn1:2.l", "esp:27", "green", [ "h-48", "v67.4", "h-144", "v-115.2" ] ],
+    [ "esp:GND.2", "btn1:1.l", "black", [ "v0", "h48", "v115.2" ] ]
+  ],
+  "dependencies": {}
 }

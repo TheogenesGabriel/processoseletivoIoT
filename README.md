@@ -256,8 +256,8 @@ Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
 
 ### Identificação do Candidato
 
-- **Nome completo:**
-- **GitHub:**
+- **Nome completo:** Theógenes Gabriel Araújo de Andrade
+- **GitHub:** https://github.com/TheogenesGabriel
 
 ---
 
@@ -269,60 +269,65 @@ Descreva, em poucas palavras:
 - O que o sistema embarcado simulado faz
 - Como o usuário interage com ele (se aplicável)
 
+O projeto simula um sistema de monitoramento para um ambiente refrigerado (tipo geladeira/estufa), alertando sobre porta aberta por muito tempo e variação brusca de temperatura. O ESP32 lê continuamente um sensor de temperatura e um botão que simula a porta, imprimindo mensagens de status no Serial Monitor. Não há interação direta do usuário: o comportamento é acionado pelas mudanças simuladas nos sensores durante o teste.
+
+
 ---
 
 ## Arquitetura do Sistema Embarcado
 
-Explique a arquitetura lógica do seu projeto, abordando:
+O firmware é organizado em quatro estados, cada um implementado como uma função dedicada e chamada explicitamente no `main()`. O loop principal é não-bloqueante, usando `time.ticks_ms()`/`time.ticks_diff()` para todas as temporizações, com um único `time.sleep_ms(50)` de tick — sem `sleep` de segundos em nenhum ponto.
 
-- Fluxo principal do programa (`main.py`)
-- Estrutura de estados, loops ou temporizações
-- Como os componentes interagem entre si
+**Diagrama em texto do fluxo:**
 
-Se desejar, utilize tópicos ou um pequeno diagrama em texto.
+main()
+ │
+ ├── inicializar_sistema()          [Estado A — executa uma única vez]
+ │     ├── configura botao (GPIO27, PULL_UP)
+ │     ├── configura I2C (SDA=21, SCL=22) e acorda o MPU6050
+ │     ├── lê estado inicial da porta
+ │     └── imprime "Sistema de Monitoramento Inicializado"
+ │
+ └── loop infinito (tick de 50 ms)
+       │
+       ├── a cada 200 ms (INTERVALO_LEITURA_MS):
+       │     ├── avaliar_porta(agora)         [Estado B]
+       │     │     └── porta aberta > 5000 ms → ALERTA de porta
+       │     │
+       │     ├── avaliar_temperatura()        [Estado C]
+       │     │     └── ΔT ≥ 3.0 °C em relação à referência → ALERTA térmico
+       │     │
+       │     └── avaliar_normalizacao()       [Estado D]
+       │           └── porta fechada E temperatura normalizada
+       │               → "Status: Sistema Normalizado."
+       │
+       └── time.sleep_ms(50)  (tick não-bloqueante)
+
+O firmware é dividido em quatro estados, cada um em uma função própria, chamados em sequência dentro de um loop principal não-bloqueante. O botão alimenta os Estados B e C (tempo de porta aberta e condição para atualizar a referência térmica). O MPU6050 alimenta o Estado C (leitura de temperatura). O Estado D só normaliza quando porta e temperatura estão OK ao mesmo tempo.
+
 
 ---
 
 ## Componentes Utilizados na Simulação
 
-Liste os principais componentes definidos no `diagram.json`, por exemplo:
+A placa é uma **ESP32 DevKit C v4**, que executa o firmware. O **MPU6050** funciona como sensor de temperatura, lido via I2C (GPIO21/22). O **botão** (`btn1`) simula a porta, ligado ao GPIO27 com pull-up interno: pressionado = fechada, solto = aberta. Os pinos TX/RX enviam as mensagens de status ao Serial Monitor.
 
-- Tipo de placa utilizada
-- LEDs, botões, sensores, atuadores, etc.
-- Função de cada componente no sistema
 
 ---
 
 ## Decisões Técnicas Relevantes
 
-Explique brevemente decisões importantes tomadas durante o desenvolvimento, como:
-
-- Organização do código
-- Uso de funções, estados ou constantes
-- Estratégias para temporização ou controle lógico
-
----
+O código foi dividido em **quatro estados** (A–D), cada um em uma função própria, seguindo o cenário do `TEMPERATURE.md`. Não há **drivers externos**: o sensor é lido diretamente via I2C, usando só módulos nativos do MicroPython. Toda a **temporização é não-bloqueante**, com `ticks_ms`/`ticks_diff` no lugar de `sleep` longo. As **mensagens de status** ficam como constantes fixas, copiadas literalmente do cenário, para evitar erro de digitação. A **temperatura de referência** é congelada durante o alarme térmico, evitando que ele se resolva sozinho.
 
 ## Resultados Obtidos
 
-Descreva o comportamento final do sistema:
+A lógica foi validada isoladamente e reproduziu a sequência esperada: porta aberta, alerta em 5 segundos, fechamento e normalização, com mensagens exatas. Um erro de fiação no `diagram.json` (botão ligado ao 3V3 em vez de GND) foi encontrado e corrigido, restaurando a leitura correta do botão. Após a correção, todos os requisitos críticos foram atendidos: strings exatas, código não-bloqueante e estados alinhados ao cenário.
 
-- O que funciona corretamente
-- Quais requisitos foram atendidos
-- Resultado observado na simulação do Wokwi
-
----
 
 ## Comentários Adicionais (Opcional)
 
-Utilize este espaço para comentar, se desejar:
+A principal dificuldade encontrada foi perceber que o bug de normalização não estava na lógica do firmware, e sim na fiação do `diagram.json`, o que reforça a importância de validar hardware e software separadamente antes de assumir que o problema está necessariamente no código. Como limitação observada, o intervalo de leitura periódica de 200 ms introduz uma pequena margem de atraso na detecção de transições de abertura e fechamento da porta, o que pode ser relevante caso o teste exija tolerância de tempo muito estreita; como melhoria futura, reduzir o `INTERVALO_LEITURA_MS` para algo entre 50 e 100 ms aumentaria a precisão de temporização sem custo relevante de desempenho no ESP32. O principal aprendizado do desafio foi que manter as mensagens de status como constantes centralizadas, e separar claramente os estados do sistema em funções nomeadas, tornou a depuração muito mais rápida, permitindo conferir o alinhamento entre o cenário, o `diagram.json` e o `main.py` item a item.
 
-- Dificuldades encontradas
-- Limitações da solução
-- Melhorias que você faria com mais tempo
-- Principais aprendizados durante o desafio
-
----
 
 > Este relatório faz parte da avaliação técnica.  
 > Clareza, objetividade e organização são tão importantes quanto o funcionamento do código.
