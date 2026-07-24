@@ -263,50 +263,13 @@ Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
 
 ## Visão Geral da Solução
 
-Descreva, em poucas palavras:
-
-- Qual é o objetivo do seu projeto
-- O que o sistema embarcado simulado faz
-- Como o usuário interage com ele (se aplicável)
-
 O projeto simula um sistema de monitoramento para um ambiente refrigerado (tipo geladeira/estufa), alertando sobre porta aberta por muito tempo e variação brusca de temperatura. O ESP32 lê continuamente um sensor de temperatura e um botão que simula a porta, imprimindo mensagens de status no Serial Monitor. Não há interação direta do usuário: o comportamento é acionado pelas mudanças simuladas nos sensores durante o teste.
 
 
----
-
 ## Arquitetura do Sistema Embarcado
 
-O firmware é organizado em quatro estados, cada um implementado como uma função dedicada e chamada explicitamente no `main()`. O loop principal é não-bloqueante, usando `time.ticks_ms()`/`time.ticks_diff()` para todas as temporizações, com um único `time.sleep_ms(50)` de tick — sem `sleep` de segundos em nenhum ponto.
+O firmware é organizado em quatro estados, cada um implementado como uma função dedicada e chamada explicitamente no `main()`. O loop principal é não-bloqueante, usando `time.ticks_ms()`/`time.ticks_diff()` para todas as temporizações, com um único `time.sleep_ms(50)` de tick — sem `sleep` de segundos em nenhum ponto. Além disso, o firmware é dividido em quatro estados, cada um em uma função própria, chamados em sequência dentro de um loop principal não-bloqueante. O botão alimenta os Estados B e C (tempo de porta aberta e condição para atualizar a referência térmica). O MPU6050 alimenta o Estado C (leitura de temperatura). O Estado D só normaliza quando porta e temperatura estão OK ao mesmo tempo.
 
-**Diagrama em texto do fluxo:**
-
-main()
- │
- ├── inicializar_sistema()          [Estado A — executa uma única vez]
- │     ├── configura botao (GPIO27, PULL_UP)
- │     ├── configura I2C (SDA=21, SCL=22) e acorda o MPU6050
- │     ├── lê estado inicial da porta
- │     └── imprime "Sistema de Monitoramento Inicializado"
- │
- └── loop infinito (tick de 50 ms)
-       │
-       ├── a cada 200 ms (INTERVALO_LEITURA_MS):
-       │     ├── avaliar_porta(agora)         [Estado B]
-       │     │     └── porta aberta > 5000 ms → ALERTA de porta
-       │     │
-       │     ├── avaliar_temperatura()        [Estado C]
-       │     │     └── ΔT ≥ 3.0 °C em relação à referência → ALERTA térmico
-       │     │
-       │     └── avaliar_normalizacao()       [Estado D]
-       │           └── porta fechada E temperatura normalizada
-       │               → "Status: Sistema Normalizado."
-       │
-       └── time.sleep_ms(50)  (tick não-bloqueante)
-
-O firmware é dividido em quatro estados, cada um em uma função própria, chamados em sequência dentro de um loop principal não-bloqueante. O botão alimenta os Estados B e C (tempo de porta aberta e condição para atualizar a referência térmica). O MPU6050 alimenta o Estado C (leitura de temperatura). O Estado D só normaliza quando porta e temperatura estão OK ao mesmo tempo.
-
-
----
 
 ## Componentes Utilizados na Simulação
 
