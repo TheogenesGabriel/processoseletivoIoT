@@ -165,7 +165,7 @@ def main():
             ultima_leitura = agora
             avaliar_porta(agora)
             avaliar_temperatura()
-            avaliar_normalizacao()
+            avaliar_normalizacao(agora)
 
         time.sleep_ms(LOOP_TICK_MS)
 
