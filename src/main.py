@@ -28,6 +28,9 @@ alarme_termico_ativo = False
 
 sistema_em_alarme = False  
 
+CONFIRMACAO_NORMALIZACAO_MS = 400
+normalizacao_desde_ms = None
+
 
 def mpu_wakeup():
     i2c.writeto_mem(MPU_ADDR, 0x6B, b'\x00')
@@ -125,17 +128,27 @@ def avaliar_temperatura():
 # ESTADO D: NORMALIZACAO (SOMENTE QUANDO AMBAS AS CONDICOES ESTAO SEGURAS)
 # ---------------------------------------------------------------
 
-def avaliar_normalizacao():
-    global sistema_em_alarme
+def avaliar_normalizacao(agora):
+    global sistema_em_alarme, normalizacao_desde_ms
 
     em_alarme = alarme_porta_ativo or alarme_termico_ativo
 
     if em_alarme:
         sistema_em_alarme = True
-    elif sistema_em_alarme:
-        sistema_em_alarme = False
-        print(MSG_NORMALIZADO)
+        normalizacao_desde_ms = None
+        return
 
+    if not sistema_em_alarme:
+        return
+
+    if normalizacao_desde_ms is None:
+        normalizacao_desde_ms = agora
+        return
+
+    if time.ticks_diff(agora, normalizacao_desde_ms) >= CONFIRMACAO_NORMALIZACAO_MS:
+        sistema_em_alarme = False
+        normalizacao_desde_ms = None
+        print(MSG_NORMALIZADO)
 
 # ---------------------------------------------------------------
 # LOOP PRINCIPAL (NAO-BLOQUEANTE)
