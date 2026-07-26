@@ -1,4 +1,5 @@
 from machine import Pin, I2C
+import time
 
 BOTAO_PIN = 27       
 I2C_SDA_PIN = 21

@@ -269,7 +269,7 @@ O projeto simula um sistema de monitoramento para um ambiente refrigerado (tipo 
 ## Arquitetura do Sistema Embarcado
 
 O firmware é organizado em quatro estados, cada um implementado como uma função dedicada e chamada explicitamente no `main()`. O loop principal é não-bloqueante, usando `time.ticks_ms()`/`time.ticks_diff()` para todas as temporizações, com um único `time.sleep_ms(50)` de tick — sem `sleep` de segundos em nenhum ponto. Além disso, o firmware é dividido em quatro estados, cada um em uma função própria, chamados em sequência dentro de um loop principal não-bloqueante. O botão alimenta os Estados B e C (tempo de porta aberta e condição para atualizar a referência térmica). O MPU6050 alimenta o Estado C (leitura de temperatura). O Estado D só normaliza quando porta e temperatura estão OK ao mesmo tempo.
-
+git 
 
 ## Componentes Utilizados na Simulação
 
